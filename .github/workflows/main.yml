@@ -25,6 +25,7 @@ jobs:
   build:
     name: Build Docker Image
     runs-on: [self-hosted]
+    needs: lint
 
     steps:
       - name: Checkout repository
@@ -32,13 +33,13 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t flaviiie/nginxtd:latest .
-          docker images  # Afficher les images disponibles pour vérification
+          sudo docker build -t flaviiie/nginxtd:latest .
+          sudo docker images
 
   push:
     name: Push Docker Image to Docker Hub
     runs-on: [self-hosted]
-    needs: build  # Ce job ne s'exécute qu'après le job 'build'
+    needs: build
 
     steps:
       - name: Checkout repository
@@ -49,5 +50,5 @@ jobs:
 
       - name: Push Docker image to Docker Hub
         run: |
-          docker push flaviiie/nginxtd:latest
+          sudo docker push flaviiie/nginxtd:latest
 
