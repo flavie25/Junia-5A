@@ -34,7 +34,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t your-dockerhub-username/your-image-name:latest .
+          docker build -t flaviiie/nginxtd:latest .
 
   push:
     name: Push Docker Image to Docker Hub
@@ -50,4 +50,4 @@ jobs:
 
       - name: Push Docker image to Docker Hub
         run: |
-          docker push your-dockerhub-username/your-image-name:latest
+          docker push flaviiie/nginxtd:latest
