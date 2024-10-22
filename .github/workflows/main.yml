@@ -4,6 +4,24 @@ on:
       - develop
 
 jobs:
+  lint:
+    name: Run PHP Lint
+    runs-on: [self-hosted]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install PHP
+        run: sudo apt-get install php-cli
+
+      - name: Run PHP lint on all PHP files
+        run: |
+          for file in $(git ls-files "*.php"); do
+            php -l $file;
+          done
+
+
   build:
     name: Build Docker Image
     runs-on: [self-hosted]
