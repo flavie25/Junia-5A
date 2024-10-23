@@ -21,7 +21,6 @@ jobs:
             php -l $file;
           done
 
-
   build:
     name: Build Docker Image
     runs-on: [self-hosted]
@@ -36,8 +35,7 @@ jobs:
           docker build -t flaviiie/nginxtd:latest .
           docker images  # Afficher les images disponibles pour vérification
 
-
-   push:
+  push:
     name: Push Docker Image to Docker Hub
     runs-on: [self-hosted]
     needs: build  # Ce job ne s'exécute qu'après le job 'build'
