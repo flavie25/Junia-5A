@@ -33,12 +33,12 @@ jobs:
       - name: Build Docker image
         run: |
           docker build -t flaviiie/nginxtd:latest .
-          docker images  # Afficher les images disponibles pour vérification
+          docker images
 
   push:
     name: Push Docker Image to Docker Hub
     runs-on: [self-hosted]
-    needs: build # Ce job ne s'exécute qu'après le job 'build'
+    needs: build
 
     steps:
       - name: Checkout repository
@@ -63,12 +63,19 @@ jobs:
       - name: Pull Docker images and start containers
         run: |
           if [ "$(docker ps -q -f name=nginx-SSH)" ]; then
-              echo "Container 'nginx' is running. Stopping and removing it."
+              echo "Container 'nginx-SSH' is running. Stopping it."
               docker stop nginx-SSH
           else
-              echo "Container 'nginx' is not running."
+              echo "Container 'nginx-SSH' is not running."
           fi
-          docker rm nginx-SSH
+
+          if [ "$(docker ps -a -q -f name=nginx-SSH)" ]; then
+              echo "Container 'nginx-SSH' exists. Removing it."
+              docker rm nginx-SSH
+          else
+              echo "Container 'nginx-SSH' does not exist."
+          fi
+          
           ssh ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} << 'EOF'
             docker pull flaviiie/nginxtd:latest
             docker run -d --name nginx-SSH -p 80:80 flaviiie/nginxtd:latest
