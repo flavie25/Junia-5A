@@ -1,0 +1,82 @@
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  lint:
+    name: Run PHP Lint
+    runs-on: [self-hosted]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install PHP
+        run: sudo apt-get install php-cli
+
+      - name: Run PHP lint on all PHP files
+        run: |
+          for file in $(git ls-files "*.php"); do
+            php -l $file;
+          done
+
+  build:
+    name: Build Docker Image
+    runs-on: [self-hosted]
+    needs: lint # Ce job ne s'exécute qu'après le job 'lint'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Build Docker image
+        run: |
+          docker build -t flaviiie/nginxtd:latest .
+          docker images
+
+  push:
+    name: Push Docker Image to Docker Hub
+    runs-on: [self-hosted]
+    needs: build
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Log in to Docker Hub
+        run: docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" -p  "${{ secrets.DOCKER_HUB_PASSWORD }}"
+
+      - name: Push Docker image to Docker Hub
+        run: |
+          docker push flaviiie/nginxtd:latest
+
+  deploy:
+    name: Deploy to Remote Server
+    runs-on: [self-hosted]
+    needs: push
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Pull Docker images and start containers
+        run: |
+          if [ "$(docker ps -q -f name=nginx-SSH)" ]; then
+              echo "Container 'nginx-SSH' is running. Stopping it."
+              docker stop nginx-SSH
+          else
+              echo "Container 'nginx-SSH' is not running."
+          fi
+
+          if [ "$(docker ps -a -q -f name=nginx-SSH)" ]; then
+              echo "Container 'nginx-SSH' exists. Removing it."
+              docker rm nginx-SSH
+          else
+              echo "Container 'nginx-SSH' does not exist."
+          fi
+          
+          ssh ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} << 'EOF'
+            docker pull flaviiie/nginxtd:latest
+            docker run -d --name nginx-SSH -p 80:80 flaviiie/nginxtd:latest
+          EOF
